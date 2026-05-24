@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Learning Quiz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Serif+Display:ital@0;1&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a40;
+    --accent: #7c6af7;
+    --accent2: #f76c6c;
+    --green: #5af7a0;
+    --text: #e8e8f0;
+    --muted: #7070a0;
+    --correct: #1a3a2a;
+    --correct-border: #5af7a0;
+    --wrong: #3a1a1a;
+    --wrong-border: #f76c6c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,106,247,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,106,247,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 760px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    margin-bottom: 32px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .progress-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #a78bfa);
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* Question card */
+  .q-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    animation: slideIn 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .q-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+  }
+
+  .q-number {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .q-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--text);
+    margin-bottom: 28px;
+  }
+
+  /* Options */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .option {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    text-align: left;
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    line-height: 1.5;
+  }
+
+  .option:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(124,106,247,0.08);
+    transform: translateX(4px);
+  }
+
+  .option:disabled { cursor: default; }
+
+  .option.correct {
+    background: var(--correct);
+    border-color: var(--correct-border);
+    color: var(--green);
+  }
+
+  .option.wrong {
+    background: var(--wrong);
+    border-color: var(--wrong-border);
+    color: var(--accent2);
+  }
+
+  .option.reveal-correct {
+    background: var(--correct);
+    border-color: var(--correct-border);
+    color: var(--green);
+    opacity: 0.7;
+  }
+
+  .opt-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: var(--border);
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    letter-spacing: 0;
+  }
+
+  .option.correct .opt-letter { background: rgba(90,247,160,0.2); }
+  .option.wrong .opt-letter { background: rgba(247,108,108,0.2); }
+  .option.reveal-correct .opt-letter { background: rgba(90,247,160,0.2); }
+
+  /* Explanation */
+  .explanation {
+    margin-top: 20px;
+    padding: 16px 18px;
+    background: rgba(124,106,247,0.06);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--muted);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+
+  .explanation strong { color: var(--text); }
+
+  /* Next button */
+  .btn-next {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 20px;
+  }
+
+  .btn-next:hover { background: #6455e0; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,106,247,0.3); }
+  .btn-next:active { transform: translateY(0); }
+
+  /* Score screen */
+  .score-screen {
+    text-align: center;
+    padding: 60px 40px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    animation: slideIn 0.4s ease;
+  }
+
+  .score-big {
+    font-family: 'DM Serif Display', serif;
+    font-size: 80px;
+    color: var(--accent);
+    line-height: 1;
+    margin: 20px 0;
+  }
+
+  .score-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .score-msg {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    line-height: 1.7;
+  }
+
+  .score-bars {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 24px 0 32px;
+    flex-wrap: wrap;
+  }
+
+  .score-pip {
+    width: 28px;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--border);
+  }
+  .score-pip.hit { background: var(--green); }
+  .score-pip.miss { background: var(--accent2); }
+
+  .intro-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+    animation: slideIn 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .intro-copy { margin-bottom: 24px; }
+
+  .intro-copy h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    font-style: italic;
+    line-height: 1.15;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+
+  .intro-copy p {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  .entry-form { display: grid; gap: 16px; }
+
+  .field { display: grid; gap: 8px; }
+
+  .field label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .field input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .field input::placeholder { color: #5f5f85; }
+
+  .field input:focus {
+    border-color: var(--accent);
+    background: rgba(124,106,247,0.06);
+    box-shadow: 0 0 0 3px rgba(124,106,247,0.12);
+  }
+
+  .form-note {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .btn-start {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(90deg, var(--accent), #a78bfa);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,106,247,0.3); }
+  .btn-start:active { transform: translateY(0); }
+
+  .student-badge {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  .student-badge span {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .submission-status {
+    margin-bottom: 22px;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .submission-status.pending { color: var(--muted); }
+  .submission-status.success { color: var(--green); }
+  .submission-status.error { color: var(--accent2); }
+
+  .btn-restart {
+    display: inline-block;
+    padding: 14px 36px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-restart:hover { background: var(--accent); color: #fff; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="eyebrow">Deep Learning Specialization</div>
+    <h1>Week 1 Quiz</h1>
+    <div class="subtitle">20 Questions · Logistic Regression &amp; Neural Network Fundamentals</div>
+  </header>
+
+  <div id="app"></div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "In logistic regression for binary classification, what is the range of the output ŷ?",
+    opts: ["(-∞, +∞)", "[0, 1]", "{0, 1}", "[-1, 1]"],
+    ans: 1,
+    exp: "The sigmoid function σ(z) always outputs a value between 0 and 1, making ŷ = σ(wᵀx + b) a valid probability estimate."
+  },
+  {
+    q: "What is the sigmoid function σ(z)?",
+    opts: ["1 / (1 + eᶻ)", "1 / (1 + e⁻ᶻ)", "eᶻ / (1 + eᶻ)", "Both B and C"],
+    ans: 3,
+    exp: "σ(z) = 1/(1+e⁻ᶻ) = eᶻ/(1+eᶻ). Both forms are equivalent. When z is very large, σ(z) ≈ 1; when z is very negative, σ(z) ≈ 0."
+  },
+  {
+    q: "A 64×64 RGB image is unrolled into a feature vector x. What is the dimension n of x?",
+    opts: ["64", "4,096", "12,288", "192"],
+    ans: 2,
+    exp: "64 × 64 × 3 (RGB channels) = 12,288. Each pixel has 3 color values, giving n_x = 12,288."
+  },
+  {
+    q: "Why is the squared-error loss ½(ŷ−y)² NOT typically used for logistic regression?",
+    opts: [
+      "It's computationally more expensive",
+      "It makes the optimization problem non-convex with many local minima",
+      "It requires more training data",
+      "It only works for multi-class problems"
+    ],
+    ans: 1,
+    exp: "The squared-error loss creates a non-convex cost function for logistic regression, making gradient descent likely to get stuck in local minima. The log-loss is convex, guaranteeing a single global optimum."
+  },
+  {
+    q: "What is the logistic regression loss function ℒ(ŷ, y) for a single training example?",
+    opts: [
+      "½(ŷ − y)²",
+      "−[y log ŷ + (1−y) log(1−ŷ)]",
+      "|ŷ − y|",
+      "y log ŷ − (1−y) log(1−ŷ)"
+    ],
+    ans: 1,
+    exp: "ℒ(ŷ,y) = −[y log ŷ + (1−y) log(1−ŷ)]. When y=1 we want ŷ to be large (log ŷ large). When y=0 we want ŷ to be small (log(1−ŷ) large)."
+  },
+  {
+    q: "In the training matrix X ∈ ℝⁿˣˣᵐ, what do the columns represent?",
+    opts: [
+      "Input features for all examples stacked as rows",
+      "Individual training examples, each as a feature vector",
+      "Output labels for all m examples",
+      "Weight vectors for each layer"
+    ],
+    ans: 1,
+    exp: "Each column of X is a single training example x⁽ⁱ⁾ ∈ ℝⁿˣ. X has shape (n_x, m) — n_x rows (features) × m columns (examples)."
+  },
+  {
+    q: "What does the gradient descent update rule for parameter w look like?",
+    opts: [
+      "w := w + α · ∂J/∂w",
+      "w := w − α · ∂J/∂w",
+      "w := w · (1 − α)",
+      "w := α · ∂J/∂w"
+    ],
+    ans: 1,
+    exp: "w := w − α(∂J/∂w). We subtract the gradient scaled by learning rate α to move w in the direction that decreases the cost J."
+  },
+  {
+    q: "In the logistic regression gradient computation, what is dz = ∂ℒ/∂z equal to?",
+    opts: [
+      "y − a",
+      "a − y",
+      "ŷ · (1 − ŷ)",
+      "w · (a − y)"
+    ],
+    ans: 1,
+    exp: "dz = a − y, where a = σ(z) is the predicted output. This elegantly simple formula is the result of chain-ruling through the sigmoid and log-loss."
+  },
+  {
+    q: "What is the cost function J(w, b) for logistic regression over m training examples?",
+    opts: [
+      "Sum of all individual losses",
+      "(1/m) · Σ ℒ(ŷ⁽ⁱ⁾, y⁽ⁱ⁾)",
+      "(1/m²) · Σ (ŷ⁽ⁱ⁾ − y⁽ⁱ⁾)²",
+      "Max of all individual losses"
+    ],
+    ans: 1,
+    exp: "J(w,b) = (1/m) Σᵢ ℒ(ŷ⁽ⁱ⁾, y⁽ⁱ⁾). It's the average loss across all m examples, ensuring the cost doesn't grow with dataset size."
+  },
+  {
+    q: "In the computation graph for J(a,b,c) = 3(a + bc), if a=5, b=3, c=2, what is ∂J/∂b?",
+    opts: ["3", "6", "9", "2"],
+    ans: 1,
+    exp: "u = bc = 6, v = a+u = 11, J = 3v = 33. ∂J/∂v = 3, ∂v/∂u = 1, ∂u/∂b = c = 2. So ∂J/∂b = 3·1·2 = 6."
+  },
+  {
+    q: "What is the key advantage of vectorization over explicit for-loops in deep learning?",
+    opts: [
+      "It uses less memory",
+      "It leverages SIMD parallelism on CPUs and GPUs for much faster computation",
+      "It's easier to read and debug",
+      "It avoids floating-point errors"
+    ],
+    ans: 1,
+    exp: "Vectorization exploits SIMD (Single Instruction, Multiple Data) hardware on both CPUs and GPUs. numpy's dot product np.dot(w.T, x) is orders of magnitude faster than a Python for-loop."
+  },
+  {
+    q: "How is the vectorized forward pass for all m examples expressed?",
+    opts: [
+      "Z = np.dot(w, X) + b",
+      "Z = np.dot(w.T, X) + b",
+      "Z = w · X + b (element-wise)",
+      "Z = np.outer(w, X)"
+    ],
+    ans: 1,
+    exp: "Z = wᵀX + b = np.dot(w.T, X) + b. Here w is (n_x,1), X is (n_x,m), giving Z of shape (1,m). The scalar b is broadcast across all m examples."
+  },
+  {
+    q: "In numpy broadcasting, what happens when you add an array of shape (3,4) with a scalar?",
+    opts: [
+      "An error is raised",
+      "The scalar is broadcast to shape (3,4) and added element-wise",
+      "Only the first row is affected",
+      "The result has shape (1,4)"
+    ],
+    ans: 1,
+    exp: "Broadcasting expands the scalar to match the shape (3,4), adding it to every element. Similarly, a (1,4) array broadcasts to (3,4), and a (3,1) array broadcasts to (3,4)."
+  },
+  {
+    q: "Why should you avoid using 'rank-1 arrays' (shape (n,)) in numpy for neural network code?",
+    opts: [
+      "They are slower than 2D arrays",
+      "They have ambiguous behavior — neither row nor column vectors — leading to subtle bugs",
+      "They cannot be used with matrix multiplication",
+      "They use more memory than 2D arrays"
+    ],
+    ans: 1,
+    exp: "np.random.randn(5) gives shape (5,), a rank-1 array. Its transpose is still shape (5,). Use np.random.randn(5,1) for a column vector or assert to verify shapes."
+  },
+  {
+    q: "What is the vectorized gradient update for w in logistic regression (over m examples)?",
+    opts: [
+      "dw = X · dZ / m",
+      "dw = X · dZᵀ / m",
+      "dw = (1/m) · X · dZᵀ",
+      "dw = (1/m) · Xᵀ · dZ (but flipped)"
+    ],
+    ans: 2,
+    exp: "dw = (1/m) · X · dZᵀ. Since dZ has shape (1,m) and X has shape (n_x,m), we compute X·dZᵀ which gives shape (n_x,1) — matching w's shape."
+  },
+  {
+    q: "In the neural network view of logistic regression, what does the single 'neuron' compute?",
+    opts: [
+      "Only the sigmoid activation",
+      "First z = wᵀx + b (linear step), then ŷ = σ(z) (activation step)",
+      "A dot product followed by a ReLU",
+      "A weighted sum of outputs from previous neurons"
+    ],
+    ans: 1,
+    exp: "Like a neuron: (1) linear combination z = wᵀx + b, then (2) activation ŷ = σ(z). This two-step view generalizes to multi-layer networks."
+  },
+  {
+    q: "Why does 'scale drive deep learning progress' matter in deep learning?",
+    opts: [
+      "Bigger models always overfit less",
+      "With large labeled datasets, large neural networks significantly outperform traditional ML algorithms",
+      "More compute makes gradient descent more accurate",
+      "Larger models have smoother loss landscapes"
+    ],
+    ans: 1,
+    exp: "Traditional ML algorithms plateau in performance as data grows. Large neural networks keep improving with more data. This is why the explosion of labeled data + compute has driven recent deep learning success."
+  },
+  {
+    q: "In logistic regression, what is the vectorized expression for db (gradient w.r.t. b)?",
+    opts: [
+      "np.sum(dZ)",
+      "(1/m) · np.sum(dZ)",
+      "np.mean(dZ, axis=1)",
+      "np.dot(dZ, ones_vector)"
+    ],
+    ans: 1,
+    exp: "db = (1/m) · Σᵢ dz⁽ⁱ⁾ = (1/m) · np.sum(dZ). The 1/m normalization matches the cost function's 1/m factor."
+  },
+  {
+    q: "What is the standard preprocessing step for image pixel values before feeding into a model?",
+    opts: [
+      "Multiply each pixel by 255",
+      "Subtract the mean only",
+      "Divide by 255 to standardize to [0,1]",
+      "Apply log transformation to each pixel"
+    ],
+    ans: 2,
+    exp: "Dividing pixel values by 255 maps them from [0,255] to [0,1]. For images, this simple standardization works well since all features (pixels) are on the same scale."
+  },
+  {
+    q: "If the learning rate α is too large in gradient descent, what happens?",
+    opts: [
+      "The model converges too slowly",
+      "The cost decreases monotonically but stops early",
+      "The algorithm may overshoot the minimum and diverge (cost oscillates or increases)",
+      "The gradients become exactly zero"
+    ],
+    ans: 2,
+    exp: "A too-large learning rate causes the parameter updates to overshoot the optimal value. The cost may oscillate wildly or even diverge. A too-small α converges but very slowly — tuning α is crucial."
+  }
+];
+
+let studentInfo = null;
+let current = 0;
+let score = 0;
+let answered = false;
+const results = new Array(questions.length).fill(null);
+
+const SUBMISSION_URL = '';
+
+function render() {
+  const app = document.getElementById('app');
+  if (!studentInfo) {
+    renderIntro(app);
+    return;
+  }
+  if (current >= questions.length) {
+    renderScore(app);
+    return;
+  }
+  const q = questions[current];
+  const pct = (current / questions.length) * 100;
+
+  app.innerHTML = `
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>QUESTION ${current + 1} OF ${questions.length}</span>
+        <span>${score} CORRECT</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="q-card">
+      <div class="q-number">Q${String(current+1).padStart(2,'0')}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">
+        ${q.opts.map((o,i) => `
+          <button class="option" data-i="${i}" onclick="choose(${i})">
+            <span class="opt-letter">${['A','B','C','D'][i]}</span>
+            <span>${o}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div id="explanation"></div>
+    </div>
+    <button class="btn-next" id="btn-next" style="display:none" onclick="next()">
+      ${current < questions.length - 1 ? 'NEXT QUESTION →' : 'SEE RESULTS →'}
+    </button>
+  `;
+}
+
+function renderIntro(app) {
+  app.innerHTML = `
+    <div class="intro-card">
+      <div class="intro-copy">
+        <h2>Enter your details to begin</h2>
+        <p>Please provide your name, student ID, and section before starting the quiz. The quiz will unlock after the form is submitted.</p>
+      </div>
+      <form class="entry-form" onsubmit="startQuiz(event)">
+        <div class="field">
+          <label for="student-name">Student Name</label>
+          <input id="student-name" name="student-name" type="text" placeholder="Full name" required>
+        </div>
+        <div class="field">
+          <label for="student-id">Student ID</label>
+          <input id="student-id" name="student-id" type="text" placeholder="e.g. 0390324" required>
+        </div>
+        <div class="field">
+          <label for="student-section">Section</label>
+          <input id="student-section" name="student-section" type="text" placeholder="e.g. L1T1" required>
+        </div>
+        <div class="form-note">Your details are used to identify your submission before the quiz starts.</div>
+        <button class="btn-start" type="submit">Start Quiz →</button>
+      </form>
+    </div>
+  `;
+}
+
+function startQuiz(event) {
+  event.preventDefault();
+  const form = event.target;
+  const name = form.elements['student-name'].value.trim();
+  const id = form.elements['student-id'].value.trim();
+  const section = form.elements['student-section'].value.trim();
+
+  if (!name || !id || !section) return;
+
+  studentInfo = { name, id, section };
+  render();
+}
+
+function choose(i) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const opts = document.querySelectorAll('.option');
+  opts.forEach(o => o.disabled = true);
+
+  const chosen = opts[i];
+  const correct = opts[q.ans];
+
+  if (i === q.ans) {
+    chosen.classList.add('correct');
+    score++;
+    results[current] = true;
+  } else {
+    chosen.classList.add('wrong');
+    correct.classList.add('reveal-correct');
+    results[current] = false;
+  }
+
+  document.getElementById('explanation').innerHTML =
+    `<div class="explanation"><strong>Explanation:</strong> ${q.exp}</div>`;
+  document.getElementById('btn-next').style.display = 'block';
+}
+
+function next() {
+  current++;
+  answered = false;
+  render();
+}
+
+function renderScore(app) {
+  const pct = Math.round((score / questions.length) * 100);
+  let msg;
+  if (pct === 100) msg = "Perfect score! You've mastered the fundamentals.";
+  else if (pct >= 80) msg = "Excellent! You have a strong grasp of the material.";
+  else if (pct >= 60) msg = "Good effort! Review the concepts you missed and try again.";
+  else msg = "Keep studying! Revisit the lecture notes and notebook exercises.";
+
+  const pips = results.map((r,i) =>
+    `<div class="score-pip ${r===true?'hit':r===false?'miss':''}" title="Q${i+1}: ${r?'✓':'✗'}"></div>`
+  ).join('');
+
+  app.innerHTML = `
+    <div class="score-screen">
+      <div class="student-badge">
+        <span>${studentInfo.name}</span>
+        <span>ID: ${studentInfo.id}</span>
+        <span>Section: ${studentInfo.section}</span>
+      </div>
+      <div class="score-label">YOUR FINAL SCORE</div>
+      <div class="score-big">${score}<span style="font-size:36px;color:var(--muted)">/${questions.length}</span></div>
+      <div class="score-bars">${pips}</div>
+      <div class="score-msg">${pct}% — ${msg}</div>
+      <button class="btn-restart" onclick="restart()">↺ RETAKE QUIZ</button>
+    </div>
+  `;
+
+  if (SUBMISSION_URL) {
+    submitResponse();
+  }
+}
+
+async function submitResponse() {
+  if (!studentInfo || !SUBMISSION_URL) return;
+
+  const payload = {
+    submittedAt: new Date().toISOString(),
+    name: studentInfo.name,
+    studentId: studentInfo.id,
+    section: studentInfo.section,
+    score,
+    total: questions.length,
+    percentage: Math.round((score / questions.length) * 100),
+    answers: results.map((result, index) => ({
+      questionNumber: index + 1,
+      correct: result === true
+    }))
+  };
+
+  try {
+    await fetch(SUBMISSION_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    // No in-app handling needed; the quiz still completes locally.
+    return;
+  }
+}
+
+function restart() {
+  current = 0;
+  score = 0;
+  answered = false;
+  results.fill(null);
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
